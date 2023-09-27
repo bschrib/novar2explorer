@@ -6,46 +6,49 @@
     "version": "1.0",
     "categories": ["commands"],
     
-    "main": "main.dist.js",
+    "main": "main.js",
     
-    "activationEvents": ["*"],
+    "activationEvents": ["onCommand:uploadToCloudflareR2"],
     
     "entitlements": {
-        "filesystem": "readwrite",
+        "filesystem": "readonly",
         "requests": true
     },
     
-    "preferences": [
+    "config": [
         {
-            "id": "cloudflareR2AccessKey",
-            "name": "Cloudflare R2 Access Key",
-            "type": "string",
-            "default": "",
-            "description": "Enter your Cloudflare R2 Access Key"
-        },
-        {
-            "id": "cloudflareR2SecretKey",
-            "name": "Cloudflare R2 Secret Key",
-            "type": "secure-string",
-            "default": "",
-            "description": "Enter your Cloudflare R2 Secret Key"
-        },
-        {
-            "id": "cloudflareR2Buckets",
-            "name": "Cloudflare R2 Buckets",
-            "type": "array",
-            "default": [],
-            "items": {
-                "type": "string"
-            },
-            "description": "Enter your Cloudflare R2 Bucket Names"
-        },
-        {
-            "id": "cloudflareR2AccountId",
-            "name": "Cloudflare R2 Account ID",
-            "type": "string",
-            "default": "",
-            "description": "Enter your Cloudflare R2 Account ID"
+            "title": "Cloudflare R2 Credentials",
+            "type": "section",
+            "children": [
+                {
+                    "key": "com.trekbikes.cloudflarer2.cloudflareR2AccessKey",
+                    "title": "Cloudflare R2 Access Key",
+                    "type": "string",
+                    "default": "default",
+                    "description": "Enter your Cloudflare R2 Access Key"
+                },
+                {
+                    "key": "com.trekbikes.cloudflarer2.cloudflareR2SecretKey",
+                    "title": "Cloudflare R2 Secret Key",
+                    "type": "string",
+                    "default": "default",
+                    "description": "Enter your Cloudflare R2 Secret Key"
+                },
+                {
+                    "key": "com.trekbikes.cloudflarer2.cloudflareR2AccountId",
+                    "title": "Cloudflare R2 Account ID",
+                    "type": "string",
+                    "default": "default",
+                    "description": "Enter your Cloudflare R2 Account ID"
+                },
+                {
+                    "key": "com.trekbikes.cloudflarer2.cloudflareR2Buckets",
+                    "title": "Cloudflare R2 Buckets",
+                    "type": "string",
+                    "default": "default,default",
+                    "description": "Enter your Cloudflare R2 Bucket Names, separated by a comma"
+                }
+            ]
         }
     ],
     
@@ -53,8 +56,16 @@
         {
             "identifier": "uploadToCloudflareR2",
             "title": "Upload to Cloudflare R2",
-            "context": "workspaceItem",
-            "subactions": []
+            "context": "workspaceItem"
         }
-    ]
+    ],
+    
+    "menus": {
+      "workspaceItem": [
+        {
+          "title": "Upload to Cloudflare R2",
+          "command": "uploadToCloudflareR2"
+        }
+      ]
+    }
 }
