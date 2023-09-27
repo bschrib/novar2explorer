@@ -1,0 +1,60 @@
+{
+    "identifier": "com.trekbikes.cloudflarer2",
+    "name": "Cloudflare R2",
+    "organization": "Trek Bicycle",
+    "description": "An extension that allows you to upload to a Cloudflare R2 Bucket",
+    "version": "1.0",
+    "categories": ["commands"],
+    
+    "main": "main.dist.js",
+    
+    "activationEvents": ["*"],
+    
+    "entitlements": {
+        "filesystem": "readwrite",
+        "requests": true
+    },
+    
+    "preferences": [
+        {
+            "id": "cloudflareR2AccessKey",
+            "name": "Cloudflare R2 Access Key",
+            "type": "string",
+            "default": "",
+            "description": "Enter your Cloudflare R2 Access Key"
+        },
+        {
+            "id": "cloudflareR2SecretKey",
+            "name": "Cloudflare R2 Secret Key",
+            "type": "secure-string",
+            "default": "",
+            "description": "Enter your Cloudflare R2 Secret Key"
+        },
+        {
+            "id": "cloudflareR2Buckets",
+            "name": "Cloudflare R2 Buckets",
+            "type": "array",
+            "default": [],
+            "items": {
+                "type": "string"
+            },
+            "description": "Enter your Cloudflare R2 Bucket Names"
+        },
+        {
+            "id": "cloudflareR2AccountId",
+            "name": "Cloudflare R2 Account ID",
+            "type": "string",
+            "default": "",
+            "description": "Enter your Cloudflare R2 Account ID"
+        }
+    ],
+    
+    "actions": [
+        {
+            "identifier": "uploadToCloudflareR2",
+            "title": "Upload to Cloudflare R2",
+            "context": "workspaceItem",
+            "subactions": []
+        }
+    ]
+}
