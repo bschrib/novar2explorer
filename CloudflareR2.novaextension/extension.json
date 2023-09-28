@@ -1,71 +1,111 @@
 {
-    "identifier": "com.trekbikes.cloudflarer2",
-    "name": "Cloudflare R2",
-    "organization": "Trek Bicycle",
-    "description": "An extension that allows you to upload to a Cloudflare R2 Bucket",
-    "version": "1.0",
-    "categories": ["commands"],
-    
-    "main": "main.js",
-    
-    "activationEvents": ["onCommand:uploadToCloudflareR2"],
-    
-    "entitlements": {
-        "filesystem": "readonly",
-        "requests": true
-    },
-    
-    "config": [
+  "identifier": "com.trekbikes.cloudflarer2",
+  "name": "Cloudflare R2 Manager",
+  "organization": "Trek Bicycle",
+  "description": "A sidebar extension to manage local files and interact with Cloudflare R2 buckets.",
+  "version": "2.0.0",
+  "categories": ["sidebars"],
+  "main": "main.js",
+  "license": "Your-License",
+  "repository": "Your-Repository-URL",
+  "bugs": "Your-Issues-URL",
+  "entitlements": {
+    "filesystem": "readwrite",
+    "requests": true,
+    "process": true
+  },
+  "sidebars": [
+    {
+      "id": "cloudflarer2",
+      "name": "Cloudflare R2",
+      "smallImage": "cloudflarer2-small",
+      "smallSelectedImage": "cloudflarer2-small-selected",
+      "largeImage": "cloudflarer2-large",
+      "largeSelectedImage": "cloudflarer2-large-selected",
+      "sections": [
         {
-            "title": "Cloudflare R2 Credentials",
-            "type": "section",
-            "children": [
+          "id": "localFiles",
+          "name": "Local Files",
+          "allowMultiple": true,
+          "placeholderText": "No local files found.",
+          "headerCommands": [
+            {
+              "title": "Upload to Cloudflare R2",
+              "image": "__builtin.upload",
+              "tooltip": "Upload selected file to Cloudflare R2",
+              "command": "cloudflarer2.upload"
+            },
+            {
+              "title": "Refresh List",
+              "image": "__builtin.refresh",
+              "tooltip": "Refresh local files list",
+              "command": "cloudflarer2.refresh"
+            }
+          ],
+          "contextCommands": [
+            {
+              "title": "Upload",
+              "command": "cloudflarer2.upload",
+              "when": "viewItem != null"
+            },
+            {
+              "title": "Delete from Cloudflare R2",
+              "command": "cloudflarer2.delete",
+              "when": "viewItem != null"
+            }
+          ]
+        },
+        {
+            "id": "cloudflareR2Files",
+            "name": "Cloudflare R2 Files",
+            "allowMultiple": true,
+            "placeholderText": "Press refresh to list the files",
+            "headerCommands": [
                 {
-                    "key": "com.trekbikes.cloudflarer2.cloudflareR2AccessKey",
-                    "title": "Cloudflare R2 Access Key",
-                    "type": "string",
-                    "default": "default",
-                    "description": "Enter your Cloudflare R2 Access Key"
-                },
-                {
-                    "key": "com.trekbikes.cloudflarer2.cloudflareR2SecretKey",
-                    "title": "Cloudflare R2 Secret Key",
-                    "type": "string",
-                    "default": "default",
-                    "description": "Enter your Cloudflare R2 Secret Key"
-                },
-                {
-                    "key": "com.trekbikes.cloudflarer2.cloudflareR2AccountId",
-                    "title": "Cloudflare R2 Account ID",
-                    "type": "string",
-                    "default": "default",
-                    "description": "Enter your Cloudflare R2 Account ID"
-                },
-                {
-                    "key": "com.trekbikes.cloudflarer2.cloudflareR2Buckets",
-                    "title": "Cloudflare R2 Buckets",
-                    "type": "string",
-                    "default": "default,default",
-                    "description": "Enter your Cloudflare R2 Bucket Names, separated by a comma"
+                    "title": "Refresh",
+                    "image": "__builtin.refresh",
+                    "tooltip": "Reload Cloudflare R2 Files",
+                    "command": "cloudflarer2.refreshR2"
                 }
             ]
         }
-    ],
-    
-    "actions": [
+      ]
+    }
+  ],
+  "config": [
+    {
+      "title": "Cloudflare R2 Credentials",
+      "type": "section",
+      "children": [
         {
-            "identifier": "uploadToCloudflareR2",
-            "title": "Upload to Cloudflare R2",
-            "context": "workspaceItem"
-        }
-    ],
-    
-    "menus": {
-      "workspaceItem": [
+          "key": "com.trekbikes.cloudflarer2.cloudflareR2AccountId",
+          "title": "Cloudflare Account ID",
+          "type": "string",
+          "default": "default",
+          "description": "Enter your Cloudflare Account ID"
+        },
         {
-          "title": "Upload to Cloudflare R2",
-          "command": "uploadToCloudflareR2"
+          "key": "com.trekbikes.cloudflarer2.cloudflareR2AccessKey",
+          "title": "S3 Access Key ID",
+          "type": "string",
+          "default": "default",
+          "description": "Enter your Cloudflare R2 S3 Access Key ID"
+        },
+        {
+          "key": "com.trekbikes.cloudflarer2.cloudflareR2SecretKey",
+          "title": "S3 Secret Access Key",
+          "type": "string",
+          "default": "default",
+          "description": "Enter your Cloudflare R2 S3 Secret Access Key"
+        },
+        {
+          "key": "com.trekbikes.cloudflarer2.cloudflareR2Bucket",
+          "title": "Cloudflare R2 Bucket",
+          "type": "string",
+          "default": "default",
+          "description": "Enter your Cloudflare R2 Bucket Name"
         }
       ]
     }
+  ]
 }

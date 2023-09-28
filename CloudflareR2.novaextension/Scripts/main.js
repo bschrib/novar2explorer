@@ -1,101 +1,169 @@
-const { AwsClient } = require('../Libraries/aws4fetch.umd.js');
+class File {
+    constructor(uri) {
+        this.uri = uri;
+        this.name = nova.path.basename(uri);
+    }
+}
 
-let awsClient;
+class FileProvider {
+    constructor() {
+        this.files = [];
+        this.refreshFiles();
+    }
 
-nova.commands.register("uploadToCloudflareR2", displayBucketSelectionUI);
+    refreshFiles() {
+        // Here, you can populate the 'this.files' array with the local files you want to display.
+        // For simplicity, let's assume you want to show all files in the workspace root.
+        const workspacePath = nova.workspace.path;
+        const fileURIs = nova.fs.listdir(workspacePath);
+        this.files = fileURIs.map(uri => new File(uri));
+    }
 
-exports.activate = function() {
-    // Do work when the extension is activated
+    getChildren(element) {
+        if (!element) {
+            return this.files;
+        }
+        return [];
+    }
 
-    const bucketString = nova.workspace.config.get('com.trekbikes.cloudflarer2.cloudflareR2Buckets');
-    const buckets = bucketString ? bucketString.split(",") : []; // Split the string into an array only if it's not null
+    getTreeItem(element) {
+        let item = new TreeItem(element.name);
+        item.command = "cloudflarer2.upload"; // Set default action to upload when clicked
+        return item;
+    }
+}
+
+class CloudflareR2File {
+    constructor(name) {
+        this.name = name;
+    }
+}
+
+class CloudflareR2FileProvider {
+    constructor() {
+        this.files = [];
+        this.bucketName = ""; // Add this line to store the current bucket name
+        this.refreshFiles();
+    }
     
-    if (buckets.length > 0) {
-        buckets.forEach(bucket => {
-            const commandIdentifier = `uploadToBucket_${bucket}`;
-            if (!nova.commands.registeredCommands[commandIdentifier]) {
-                nova.commands.register(commandIdentifier, () => uploadToBucket(bucket));
+    async refreshFiles() {
+        return new Promise((resolve, reject) => {
+            try {
+                // Fetch the bucket names and other necessary credentials from the config
+                this.bucket = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2Bucket", "string");
+                const accessKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccessKey", "string");
+                const secretKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2SecretKey", "string");
+                const accountId = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccountId", "string");
+                
+                // Use Nova's Process API to run the AWS CLI command with the provided arguments
+                let process = new Process("/usr/bin/env", {
+                    args: [
+                        "AWS_ENDPOINT_URL=https://" + accountId + ".r2.cloudflarestorage.com",
+                        "AWS_DEFAULT_OUTPUT=json",
+                        "AWS_DEFAULT_REGION=auto",
+                        "AWS_ACCESS_KEY_ID=" + accessKey,
+                        "AWS_SECRET_ACCESS_KEY=" + secretKey,
+                        "aws", "s3", "ls", `s3://${this.bucket}`
+                    ],
+                    shell: true
+                });
+                
+                let accumulatedOutput = ""; // Variable to accumulate the output
+                
+                process.onStdout((output) => {
+                    accumulatedOutput += output; // Accumulate the output
+                });
+                
+                process.onStderr((error) => {
+                    console.error("Error:", error);
+                });
+                
+                process.onDidExit((exitCode) => {
+                    if (exitCode === 0) { // Check if the process exited successfully
+                        // Split the accumulated output by newline to get individual lines
+                        let lines = accumulatedOutput.trim().split('\n');
+                
+                        // Extract file names from each line
+                        this.files = lines.map(line => {
+                            // Assuming the file name is the last space-separated value in each line
+                            let parts = line.trim().split(/\s+/);
+                            return new CloudflareR2File(parts[parts.length - 1]);
+                        });
+                        resolve(); // Resolve the promise when the process completes successfully
+                    } else {
+                        console.error("Process exited with code:", exitCode);
+                        reject(new Error("Process exited with code: " + exitCode)); // Reject the promise if there's an error
+                    }
+                });
+                
+                process.start();
+            
+            } catch (error) {
+                console.error("Error fetching files from Cloudflare R2:", error);
+                reject(error); // Reject the promise if there's an error
             }
         });
     }
+    
+    // Override the getRoot method to return a custom root element
+    getRoot() {
+        return new TreeItem(this.bucket, TreeItemCollapsibleState.Expanded);
+    }
+
+    getChildren(element) {
+        if (!element || element.name === this.bucket) { // Check if the element is the bucket name
+            return this.files;
+        }
+        return [];
+    }
+
+    getTreeItem(element) {
+        let item = new TreeItem(element.name);
+        item.command = "cloudflarer2.deleteR2"; // Set default action to delete when clicked
+        return item;
+    }
+}
+
+exports.activate = function() {
+    if (typeof URL === 'undefined') {
+        this.URL = function(urlString) {
+            let anchor = document.createElement('a');
+            anchor.href = urlString;
+            return anchor;
+        };
+    }
+    
+    const localFileProvider = new FileProvider();
+    const localFileTreeView = new TreeView("localFiles", { dataProvider: localFileProvider });
+    nova.subscriptions.add(localFileTreeView);
+    
+    const cloudflareR2FileProvider = new CloudflareR2FileProvider();
+    const cloudflareR2FileTreeView = new TreeView("cloudflareR2Files", { dataProvider: cloudflareR2FileProvider });
+    nova.subscriptions.add(cloudflareR2FileTreeView);
+
+
+    // Register commands
+    nova.commands.register("cloudflarer2.upload", (file) => {
+        // Implement the upload functionality here
+        // Use the 'file.uri' to get the file path
+    });
+
+    nova.commands.register("cloudflarer2.delete", (file) => {
+        // Implement the delete functionality here
+        // Use the 'file.uri' to get the file path
+    });
+
+    nova.commands.register("cloudflarer2.refresh", () => {
+        localFileProvider.refreshFiles();
+        localFileTreeView.reload();
+    });
+    
+    nova.commands.register("cloudflarer2.refreshR2", () => {
+        cloudflareR2FileProvider.refreshFiles();
+        cloudflareR2FileTreeView.reload();
+    });
 }
 
 exports.deactivate = function() {
-    // Clean up state before the extension is deactivated
-}
-
-async function uploadToBucket(bucketName) {
-    const credentials = getCloudflareR2Credentials();
-    const selectedFiles = nova.workspace.selectedPaths;
-    
-    if (!credentials.accessKey || credentials.accessKey === "default" || !credentials.secretKey || credentials.secretKey === "default") {
-        nova.workspace.showInformativeMessage("Please set your Cloudflare R2 Access Key and Secret Key in the extension settings.");
-        return; // Exit the function if the credentials are not set or are default
-    }
-    
-    // Initialize the AwsClient from aws4fetch
-    if (!awsClient) {
-        awsClient = new AwsClient({
-            accessKeyId: credentials.accessKey,
-            secretAccessKey: credentials.secretKey,
-            service: 's3',
-            region: 'us-east-1' // or your specific region
-        });
-    }
-    
-    for (const filePath of selectedFiles) {
-        const fileName = nova.path.basename(filePath);
-        const fileContent = await nova.fs.open(filePath).read();
-
-        const url = `https://${bucketName}.r2.cloudflarestorage.com/${fileName}`;
-        const request = new Request(url, {
-            method: 'PUT',
-            body: fileContent
-        });
-
-        const signedRequest = await awsClient.sign(request);
-        const response = await fetch(signedRequest);
-
-        if (!response.ok) {
-            console.error("Error uploading file:", response.statusText);
-            nova.workspace.showInformativeMessage(`Error uploading ${fileName} to ${bucketName}`);
-        } else {
-            console.log(`File ${fileName} uploaded successfully to ${url}`);
-            nova.workspace.showInformativeMessage(`File ${fileName} uploaded successfully to ${bucketName}`);
-        }
-    }
-}
-
-function getCloudflareR2Credentials() {
-    const accessKey = nova.workspace.config.get('com.trekbikes.cloudflarer2.cloudflareR2AccessKey');
-    const secretKey = nova.workspace.config.get('com.trekbikes.cloudflarer2.cloudflareR2SecretKey');
-    const accountId = nova.workspace.config.get('com.trekbikes.cloudflarer2.cloudflareR2AccountId');
-
-    const credentials = {
-        accessKey: accessKey,
-        secretKey: secretKey,
-        accountId: accountId
-    };
-
-    console.log("Retrieved credentials:", credentials);
-
-    return credentials;
-}
-
-function displayBucketSelectionUI() {
-    const bucketString = nova.workspace.config.get('com.trekbikes.cloudflarer2.cloudflareR2Buckets');
-    const buckets = bucketString ? bucketString.split(",") : [];
-    
-    if (buckets.length === 0) {
-        nova.workspace.showInformativeMessage("No Cloudflare R2 Buckets are configured.");
-        return;
-    }
-
-    // Display a dropdown or a list for bucket selection
-    // This is a simplified example using a dropdown; you might want to use a more advanced UI
-    const selectedBucket = nova.ui.showChoicePalette(buckets, "Select a Cloudflare R2 Bucket to upload to:");
-    
-    if (selectedBucket) {
-        uploadToBucket(selectedBucket);
-    }
+    // Clean up any state or listeners here if needed
 }
