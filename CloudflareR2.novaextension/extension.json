@@ -67,6 +67,12 @@
                     "tooltip": "Reload Cloudflare R2 Files",
                     "command": "cloudflarer2.refreshR2"
                 }
+            ],
+            "contextCommands": [
+              {
+                "title": "Delete File From Cloudflare R2",
+                "command": "cloudflarer2.deleteR2"
+              }
             ]
         }
       ]
