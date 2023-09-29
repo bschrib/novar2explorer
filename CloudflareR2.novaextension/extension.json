@@ -44,14 +44,8 @@
           ],
           "contextCommands": [
             {
-              "title": "Upload",
-              "command": "cloudflarer2.upload",
-              "when": "viewItem != null"
-            },
-            {
-              "title": "Delete from Cloudflare R2",
-              "command": "cloudflarer2.delete",
-              "when": "viewItem != null"
+              "title": "Upload File To Cloudflare R2",
+              "command": "cloudflarer2.upload"
             }
           ]
         },

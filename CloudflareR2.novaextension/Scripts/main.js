@@ -7,6 +7,20 @@ class CloudflareR2App {
 		this.cloudflareR2FileProvider = new CloudflareR2FileProvider();
 		this.cloudflareR2FileTreeView = new TreeView("cloudflareR2Files", { dataProvider: this.cloudflareR2FileProvider });
 		nova.subscriptions.add(this.cloudflareR2FileTreeView);
+		
+		// Add this line to refresh the Cloudflare R2 files when the app is initialized
+		this.cloudflareR2FileProvider.refreshFiles().then(() => {
+			this.cloudflareR2FileTreeView.reload();
+		});
+		
+		// Add this event listener:
+		this.cloudflareR2FileTreeView.onDidChangeSelection(() => {
+			if (this.cloudflareR2FileProvider.files.length === 0) {
+				this.cloudflareR2FileProvider.refreshFiles().then(() => {
+					this.cloudflareR2FileTreeView.reload();
+				});
+			}
+		});
 
 		this.init();
 	}
@@ -24,14 +38,14 @@ class CloudflareR2App {
 	}
 
 	registerCommands() {
-		nova.commands.register("cloudflarer2.upload", (file) => {
-			// Implement the upload functionality here
-			// Use the 'file.uri' to get the file path
-		});
-
-		nova.commands.register("cloudflarer2.delete", (file) => {
-			// Implement the delete functionality here
-			// Use the 'file.uri' to get the file path
+		nova.commands.register("cloudflarer2.upload", async () => {
+			const selectedFiles = this.getLocalFileSelection();
+			for (const file of selectedFiles) {
+				await this.cloudflareR2FileProvider.uploadFileToCloudflareR2(file.uri);
+			}
+			// Refresh the Cloudflare R2 Files section after the upload
+			await this.cloudflareR2FileProvider.refreshFiles();
+			this.cloudflareR2FileTreeView.reload();
 		});
 
 		nova.commands.register("cloudflarer2.refreshR2", async () => {
@@ -45,18 +59,21 @@ class CloudflareR2App {
 		});
 
 		nova.commands.register("cloudflarer2.deleteR2", async () => {
-			const selectedFile = this.getCurrentSelection()[0]; // Assuming single selection
-			if (selectedFile) {
-				await this.cloudflareR2FileProvider.deleteFileFromCloudflareR2(selectedFile.key);
-				this.cloudflareR2FileTreeView.reload();
+			const selectedFiles = this.getCurrentSelection();
+			for (const file of selectedFiles) {
+				await this.cloudflareR2FileProvider.deleteFileFromCloudflareR2(file.key);
 			}
+			this.cloudflareR2FileTreeView.reload();
 		});
 	}
 	
 	getCurrentSelection() {
 		return this.cloudflareR2FileTreeView.selection;
 	}
-
+	
+	getLocalFileSelection() {
+		return this.localFileTreeView.selection;
+	}
 }
 
 function buildFileTree(contents) {
@@ -97,22 +114,18 @@ class FileProvider {
 	}
 
 	async refreshFiles(parentUri = nova.workspace.path) {
-		console.log("Refreshing files for:", parentUri);
 	
 		try {
 			const fileURIs = await nova.fs.listdir(parentUri);
-			console.log("Listed URIs:", fileURIs);
 	
 			const absoluteFileURIs = fileURIs.map(uri => nova.path.join(parentUri, uri)); // Convert to absolute paths
 	
 			const fileStatsPromises = absoluteFileURIs.map(async absoluteUri => {
 				try {
 					const stats = await nova.fs.stat(absoluteUri);
-					console.log("Stats for URI:", absoluteUri, stats);
 	
 					if (stats) { 
 						const isDir = stats.isDirectory();
-						console.log("isDirectory for URI:", absoluteUri, isDir);
 						return new File(absoluteUri, isDir);
 					}
 				} catch (error) {
@@ -122,7 +135,6 @@ class FileProvider {
 			});
 	
 			this.files = (await Promise.all(fileStatsPromises)).filter(file => file !== null);
-			console.log("Refreshed files:", this.files.map(file => file.name));
 		} catch (error) {
 			console.error("Error listing URIs for:", parentUri, error);
 		}
@@ -246,7 +258,7 @@ class CloudflareR2FileProvider {
 				});
 				
 				process.onStdout((output) => {
-					console.log("Output:", output);
+					// console.log("Output:", output);
 				});
 				
 				process.onStderr((error) => {
@@ -256,6 +268,8 @@ class CloudflareR2FileProvider {
 				process.onDidExit((exitCode) => {
 					if (exitCode === 0) {
 						console.log("File deleted successfully:", fileName);
+						this.files = this.files.filter(file => file.key !== fileName);
+						this.fileTree = buildFileTree(this.files.map(file => ({ Key: file.key })));
 						resolve();
 					} else {
 						console.error("Process exited with code:", exitCode);
@@ -267,6 +281,55 @@ class CloudflareR2FileProvider {
 			
 			} catch (error) {
 				console.error("Error deleting file from Cloudflare R2:", error);
+				reject(error);
+			}
+		});
+	}
+	
+	async uploadFileToCloudflareR2(filePath) {
+		return new Promise((resolve, reject) => {
+			try {
+				const bucket = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2Bucket", "string");
+				const accessKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccessKey", "string");
+				const secretKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2SecretKey", "string");
+				const accountId = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccountId", "string");
+				const fileName = nova.path.basename(filePath);
+	
+				let process = new Process("/usr/bin/env", {
+					args: [
+						`AWS_ENDPOINT_URL=https://${accountId}.r2.cloudflarestorage.com`,
+						"AWS_DEFAULT_OUTPUT=json",
+						"AWS_DEFAULT_REGION=auto",
+						`AWS_ACCESS_KEY_ID=${accessKey}`,
+						`AWS_SECRET_ACCESS_KEY=${secretKey}`,
+						"aws", "s3api", "put-object", "--bucket", bucket, "--key", fileName, "--body", filePath
+					],
+					shell: true
+				});
+	
+				process.onStdout((output) => {
+					console.log("Output:", output);
+				});
+	
+				process.onStderr((error) => {
+					console.error("Error:", error);
+				});
+	
+				process.onDidExit((exitCode) => {
+					if (exitCode === 0) {
+						console.log("File uploaded successfully:", fileName);
+						this.files.push(new CloudflareR2File(fileName)); // Add the uploaded file to the files array
+						resolve();
+					} else {
+						console.error("Process exited with code:", exitCode);
+						reject(new Error("Process exited with code: " + exitCode));
+					}
+				});
+	
+				process.start();
+	
+			} catch (error) {
+				console.error("Error uploading file to Cloudflare R2:", error);
 				reject(error);
 			}
 		});
