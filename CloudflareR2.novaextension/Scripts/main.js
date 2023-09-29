@@ -1,7 +1,31 @@
+function buildFileTree(contents) {
+    const rootNode = { children: {} };
+
+    for (const item of contents) {
+        const parts = item.Key.split('/');
+        let currentNode = rootNode;
+
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            if (!currentNode.children[part]) {
+                if (i === parts.length - 1) {
+                    currentNode.children[part] = item; // It's a file
+                } else {
+                    currentNode.children[part] = { children: {} }; // It's a folder
+                }
+            }
+            currentNode = currentNode.children[part];
+        }
+    }
+
+    return rootNode;
+}
+
 class File {
-    constructor(uri) {
+    constructor(uri, isFolder = false) {
         this.uri = uri;
         this.name = nova.path.basename(uri);
+        this.isFolder = isFolder;
     }
 }
 
@@ -11,31 +35,67 @@ class FileProvider {
         this.refreshFiles();
     }
 
-    refreshFiles() {
-        // Here, you can populate the 'this.files' array with the local files you want to display.
-        // For simplicity, let's assume you want to show all files in the workspace root.
-        const workspacePath = nova.workspace.path;
-        const fileURIs = nova.fs.listdir(workspacePath);
-        this.files = fileURIs.map(uri => new File(uri));
+    async refreshFiles(parentUri = nova.workspace.path) {
+        console.log("Refreshing files for:", parentUri);
+    
+        try {
+            const fileURIs = await nova.fs.listdir(parentUri);
+            console.log("Listed URIs:", fileURIs);
+    
+            const absoluteFileURIs = fileURIs.map(uri => nova.path.join(parentUri, uri)); // Convert to absolute paths
+    
+            const fileStatsPromises = absoluteFileURIs.map(async absoluteUri => {
+                try {
+                    const stats = await nova.fs.stat(absoluteUri);
+                    console.log("Stats for URI:", absoluteUri, stats);
+    
+                    if (stats) { 
+                        const isDir = stats.isDirectory();
+                        console.log("isDirectory for URI:", absoluteUri, isDir);
+                        return new File(absoluteUri, isDir);
+                    }
+                } catch (error) {
+                    console.error("Error processing URI:", absoluteUri, error);
+                }
+                return null;
+            });
+    
+            this.files = (await Promise.all(fileStatsPromises)).filter(file => file !== null);
+            console.log("Refreshed files:", this.files.map(file => file.name));
+        } catch (error) {
+            console.error("Error listing URIs for:", parentUri, error);
+        }
     }
 
-    getChildren(element) {
+    async getChildren(element) {
         if (!element) {
             return this.files;
+        }
+        if (element.isFolder) {
+            await this.refreshFiles(element.uri); // Refresh files for the clicked folder
+            return this.files; // Return the refreshed files
         }
         return [];
     }
 
+
     getTreeItem(element) {
         let item = new TreeItem(element.name);
-        item.command = "cloudflarer2.upload"; // Set default action to upload when clicked
+        if (element.isFolder) {
+            item.collapsibleState = TreeItemCollapsibleState.Collapsed;
+        } else {
+            item.command = "cloudflarer2.upload";
+        }
         return item;
     }
+
 }
 
 class CloudflareR2File {
-    constructor(name) {
-        this.name = name;
+    constructor(key, isFolder = false) {
+        this.key = key;
+        this.name = key.split('/').pop();
+        this.isFolder = isFolder;
     }
 }
 
@@ -63,7 +123,7 @@ class CloudflareR2FileProvider {
                         "AWS_DEFAULT_REGION=auto",
                         "AWS_ACCESS_KEY_ID=" + accessKey,
                         "AWS_SECRET_ACCESS_KEY=" + secretKey,
-                        "aws", "s3", "ls", `s3://${this.bucket}`
+                        "aws", "s3api", "list-objects", "--bucket", this.bucket
                     ],
                     shell: true
                 });
@@ -79,20 +139,17 @@ class CloudflareR2FileProvider {
                 });
                 
                 process.onDidExit((exitCode) => {
-                    if (exitCode === 0) { // Check if the process exited successfully
-                        // Split the accumulated output by newline to get individual lines
-                        let lines = accumulatedOutput.trim().split('\n');
-                
-                        // Extract file names from each line
-                        this.files = lines.map(line => {
-                            // Assuming the file name is the last space-separated value in each line
-                            let parts = line.trim().split(/\s+/);
-                            return new CloudflareR2File(parts[parts.length - 1]);
+                    if (exitCode === 0) {
+                        const parsedOutput = JSON.parse(accumulatedOutput);
+                        this.files = parsedOutput.Contents.map(item => {
+                            const isFolder = item.Key.endsWith('/');
+                            return new CloudflareR2File(item.Key, isFolder);
                         });
-                        resolve(); // Resolve the promise when the process completes successfully
+                        this.fileTree = buildFileTree(parsedOutput.Contents);
+                        resolve();
                     } else {
                         console.error("Process exited with code:", exitCode);
-                        reject(new Error("Process exited with code: " + exitCode)); // Reject the promise if there's an error
+                        reject(new Error("Process exited with code: " + exitCode));
                     }
                 });
                 
@@ -111,15 +168,26 @@ class CloudflareR2FileProvider {
     }
 
     getChildren(element) {
-        if (!element || element.name === this.bucket) { // Check if the element is the bucket name
-            return this.files;
+        if (!this.fileTree || !this.fileTree.children) {
+            return []; // Return an empty array if the fileTree is not yet populated
+        }
+    
+        if (!element) {
+            return Object.keys(this.fileTree.children).map(key => new CloudflareR2File(key, this.fileTree.children[key].children !== undefined));
+        }
+        if (element.isFolder && this.fileTree.children[element.name]) {
+            return Object.keys(this.fileTree.children[element.name].children).map(key => new CloudflareR2File(key, this.fileTree.children[element.name].children[key].children !== undefined));
         }
         return [];
     }
-
+    
     getTreeItem(element) {
         let item = new TreeItem(element.name);
-        item.command = "cloudflarer2.deleteR2"; // Set default action to delete when clicked
+        if (element.isFolder) {
+            item.collapsibleState = TreeItemCollapsibleState.Collapsed;
+        } else {
+            item.command = "cloudflarer2.deleteR2";
+        }
         return item;
     }
 }
@@ -152,15 +220,15 @@ exports.activate = function() {
         // Implement the delete functionality here
         // Use the 'file.uri' to get the file path
     });
-
-    nova.commands.register("cloudflarer2.refresh", () => {
-        localFileProvider.refreshFiles();
-        localFileTreeView.reload();
+    
+    nova.commands.register("cloudflarer2.refreshR2", async () => {
+        await cloudflareR2FileProvider.refreshFiles(); // Wait for the refreshFiles method to complete
+        cloudflareR2FileTreeView.reload();
     });
     
-    nova.commands.register("cloudflarer2.refreshR2", () => {
-        cloudflareR2FileProvider.refreshFiles();
-        cloudflareR2FileTreeView.reload();
+    nova.commands.register("cloudflarer2.refresh", async () => {
+        await localFileProvider.refreshFiles();
+        localFileTreeView.reload();
     });
 }
 
