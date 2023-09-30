@@ -8,12 +8,10 @@ class CloudflareR2App {
 		this.cloudflareR2FileTreeView = new TreeView("cloudflareR2Files", { dataProvider: this.cloudflareR2FileProvider });
 		nova.subscriptions.add(this.cloudflareR2FileTreeView);
 		
-		// Add this line to refresh the Cloudflare R2 files when the app is initialized
 		this.cloudflareR2FileProvider.refreshFiles().then(() => {
 			this.cloudflareR2FileTreeView.reload();
 		});
 		
-		// Add this event listener:
 		this.cloudflareR2FileTreeView.onDidChangeSelection(() => {
 			if (this.cloudflareR2FileProvider.files.length === 0) {
 				this.cloudflareR2FileProvider.refreshFiles().then(() => {
@@ -43,7 +41,6 @@ class CloudflareR2App {
 			for (const file of selectedFiles) {
 				await this.cloudflareR2FileProvider.uploadFileToCloudflareR2(file.uri);
 			}
-			// Refresh the Cloudflare R2 Files section after the upload
 			await this.cloudflareR2FileProvider.refreshFiles();
 			this.cloudflareR2FileTreeView.reload();
 		});
@@ -87,9 +84,9 @@ function buildFileTree(contents) {
 			const part = parts[i];
 			if (!currentNode.children[part]) {
 				if (i === parts.length - 1) {
-					currentNode.children[part] = item; // It's a file
+					currentNode.children[part] = item;
 				} else {
-					currentNode.children[part] = { children: {} }; // It's a folder
+					currentNode.children[part] = { children: {} };
 				}
 			}
 			currentNode = currentNode.children[part];
@@ -118,7 +115,7 @@ class FileProvider {
 		try {
 			const fileURIs = await nova.fs.listdir(parentUri);
 	
-			const absoluteFileURIs = fileURIs.map(uri => nova.path.join(parentUri, uri)); // Convert to absolute paths
+			const absoluteFileURIs = fileURIs.map(uri => nova.path.join(parentUri, uri));
 	
 			const fileStatsPromises = absoluteFileURIs.map(async absoluteUri => {
 				try {
@@ -145,8 +142,8 @@ class FileProvider {
 			return this.files;
 		}
 		if (element.isFolder) {
-			await this.refreshFiles(element.uri); // Refresh files for the clicked folder
-			return this.files; // Return the refreshed files
+			await this.refreshFiles(element.uri);
+			return this.files;
 		}
 		return [];
 	}
@@ -175,20 +172,20 @@ class CloudflareR2File {
 class CloudflareR2FileProvider {
 	constructor() {
 		this.files = [];
-		this.bucketName = ""; // Add this line to store the current bucket name
+		this.bucketName = "";
 		this.refreshFiles();
 	}
 	
 	async refreshFiles() {
 		return new Promise((resolve, reject) => {
 			try {
-				// Fetch the bucket names and other necessary credentials from the config
+				console.log('Refreshing Cloudflare R2 Files')
+				
 				this.bucket = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2Bucket", "string");
 				const accessKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccessKey", "string");
 				const secretKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2SecretKey", "string");
 				const accountId = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccountId", "string");
 				
-				// Use Nova's Process API to run the AWS CLI command with the provided arguments
 				let process = new Process("/usr/bin/env", {
 					args: [
 						"AWS_ENDPOINT_URL=https://" + accountId + ".r2.cloudflarestorage.com",
@@ -201,10 +198,10 @@ class CloudflareR2FileProvider {
 					shell: true
 				});
 				
-				let accumulatedOutput = ""; // Variable to accumulate the output
+				let accumulatedOutput = "";
 				
 				process.onStdout((output) => {
-					accumulatedOutput += output; // Accumulate the output
+					accumulatedOutput += output;
 				});
 				
 				process.onStderr((error) => {
@@ -230,7 +227,7 @@ class CloudflareR2FileProvider {
 			
 			} catch (error) {
 				console.error("Error fetching files from Cloudflare R2:", error);
-				reject(error); // Reject the promise if there's an error
+				reject(error);
 			}
 		});
 	}
@@ -238,13 +235,11 @@ class CloudflareR2FileProvider {
 	async deleteFileFromCloudflareR2(fileName) {
 		return new Promise((resolve, reject) => {
 			try {
-				// Fetch the necessary credentials from the config
 				const bucket = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2Bucket", "string");
 				const accessKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccessKey", "string");
 				const secretKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2SecretKey", "string");
 				const accountId = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccountId", "string");
 				
-				// Use Nova's Process API to run the AWS CLI command with the provided arguments
 				let process = new Process("/usr/bin/env", {
 					args: [
 						`AWS_ENDPOINT_URL=https://${accountId}.r2.cloudflarestorage.com`,
@@ -308,7 +303,7 @@ class CloudflareR2FileProvider {
 				});
 	
 				process.onStdout((output) => {
-					console.log("Output:", output);
+					// console.log("Output:", output);
 				});
 	
 				process.onStderr((error) => {
@@ -318,7 +313,7 @@ class CloudflareR2FileProvider {
 				process.onDidExit((exitCode) => {
 					if (exitCode === 0) {
 						console.log("File uploaded successfully:", fileName);
-						this.files.push(new CloudflareR2File(fileName)); // Add the uploaded file to the files array
+						this.files.push(new CloudflareR2File(fileName));
 						resolve();
 					} else {
 						console.error("Process exited with code:", exitCode);
