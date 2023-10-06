@@ -1,6 +1,6 @@
 {
   "identifier": "com.trekbikes.cloudflarer2",
-  "name": "Cloudflare R2 Manager",
+  "name": "Cloudflare R2 Explorer",
   "organization": "Trek Bicycle",
   "description": "A sidebar extension to manage local files and interact with Cloudflare R2 buckets.",
   "version": "1.0.0",
@@ -8,7 +8,7 @@
   "main": "main.js",
   "license": "MIT",
   "repository": "https://bitbucket.org/trekbikes/nova-cloudflarer2/src/main/",
-  "bugs": "Your-Issues-URL",
+  "bugs": "https://bitbucket.org/trekbikes/nova-cloudflarer2/issues/",
   "entitlements": {
     "filesystem": "readwrite",
     "process": true
@@ -82,28 +82,28 @@
           "title": "Cloudflare Account ID",
           "type": "string",
           "default": "default",
-          "description": "Enter your Cloudflare Account ID"
+          "description": "Enter Your Cloudflare Account ID"
         },
         {
           "key": "com.trekbikes.cloudflarer2.cloudflareR2AccessKey",
           "title": "S3 Access Key ID",
           "type": "string",
           "default": "default",
-          "description": "Enter your Cloudflare R2 S3 Access Key ID"
+          "description": "Enter Your Cloudflare R2 S3 Access Key ID"
         },
         {
           "key": "com.trekbikes.cloudflarer2.cloudflareR2SecretKey",
           "title": "S3 Secret Access Key",
           "type": "string",
           "default": "default",
-          "description": "Enter your Cloudflare R2 S3 Secret Access Key"
+          "description": "Enter Your Cloudflare R2 S3 Secret Access Key"
         },
         {
           "key": "com.trekbikes.cloudflarer2.cloudflareR2Bucket",
           "title": "Cloudflare R2 Bucket",
           "type": "string",
           "default": "default",
-          "description": "Enter your Cloudflare R2 Bucket Name"
+          "description": "Enter Your Cloudflare R2 Bucket Name"
         }
       ]
     }
