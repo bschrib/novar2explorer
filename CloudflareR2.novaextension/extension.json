@@ -3,21 +3,20 @@
   "name": "Cloudflare R2 Manager",
   "organization": "Trek Bicycle",
   "description": "A sidebar extension to manage local files and interact with Cloudflare R2 buckets.",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "categories": ["sidebars"],
   "main": "main.js",
-  "license": "Your-License",
-  "repository": "Your-Repository-URL",
+  "license": "MIT",
+  "repository": "https://bitbucket.org/trekbikes/nova-cloudflarer2/src/main/",
   "bugs": "Your-Issues-URL",
   "entitlements": {
     "filesystem": "readwrite",
-    "requests": true,
     "process": true
   },
   "sidebars": [
     {
       "id": "cloudflarer2",
-      "name": "Cloudflare R2",
+      "name": "R2 Explorer",
       "smallImage": "cloudflarer2-small",
       "smallSelectedImage": "cloudflarer2-small-selected",
       "largeImage": "cloudflarer2-large",
