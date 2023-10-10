@@ -162,12 +162,12 @@ class FileProvider {
 		if (element.isFolder) {
 			item.collapsibleState = TreeItemCollapsibleState.Collapsed;
 			item.image = "__builtin.path";
-			console.log("FileProvider: For " + element.name + " setting extension to: __builtin.path");
+			// console.log("FileProvider: For " + element.name + " setting extension to: __builtin.path");
 		} else {
 			item.command = "cloudflarer2.upload";
 			let fileExtension = element.name.split(".").pop();
 			item.image = "__filetype." + fileExtension;
-			console.log("FileProvider: For " + element.name + " setting extension to: " + fileExtension);
+			// console.log("FileProvider: For " + element.name + " setting extension to: " + fileExtension);
 		}
 		return item;
 	}
@@ -387,11 +387,11 @@ class CloudflareR2FileProvider {
 		if (element.isFolder) {
 			item.collapsibleState = TreeItemCollapsibleState.Collapsed;
 			item.image = "__builtin.path";
-			console.log("CloudflareR2FileProvider: For " + element.name + " setting extension to: __builtin.path");
+			// console.log("CloudflareR2FileProvider: For " + element.name + " setting extension to: __builtin.path");
 		} else {
 			let fileExtension = element.name.split(".").pop();
 			item.image = "__filetype." + fileExtension;
-			console.log("CloudflareR2FileProvider: For " + element.name + " setting extension to: " + fileExtension);
+			// console.log("CloudflareR2FileProvider: For " + element.name + " setting extension to: " + fileExtension);
 		}
 		return item;
 	}
