@@ -10,12 +10,12 @@ class CloudflareR2App {
 			const selectedItem = this.getCurrentSelection()[0];
 			if (selectedItem) {
 				if (selectedItem.isFolder) {
-					this.cloudflareR2FileProvider.currentFolderPath = selectedItem.key + '/'; // Set to the full key if it's a folder
+					this.cloudflareR2FileProvider.currentR2FolderPath = selectedItem.key + '/';
 				} else {
-					this.cloudflareR2FileProvider.currentFolderPath = selectedItem.prefix; // Set to the prefix if it's a file
+					this.cloudflareR2FileProvider.currentR2FolderPath = selectedItem.prefix;
 				}
 			} else {
-				this.cloudflareR2FileProvider.currentFolderPath = ''; // Reset to root if no selection
+				this.cloudflareR2FileProvider.currentR2FolderPath = '';
 			}
 		});
 		nova.subscriptions.add(this.cloudflareR2FileTreeView);
@@ -58,7 +58,7 @@ class CloudflareR2App {
 	async refreshR2FilesAndReloadView() {
 		await this.cloudflareR2FileProvider.refreshFiles();
 		this.cloudflareR2FileTreeView.reload();
-		this.cloudflareR2FileProvider.currentFolderPath = '';
+		this.cloudflareR2FileProvider.currentR2FolderPath = '';
 	}
 	
 	getCurrentSelection() {
@@ -74,7 +74,7 @@ function buildFileTree(contents) {
 	const rootNode = { children: {} };
 
 	for (const item of contents) {
-		const parts = item.Key.split('/').filter(part => part.trim() !== ''); // Filter out empty parts
+		const parts = item.Key.split('/').filter(part => part.trim() !== '');
 		let currentNode = rootNode;
 
 		for (let i = 0; i < parts.length; i++) {
@@ -176,7 +176,7 @@ class FileProvider {
 class CloudflareR2FileProvider {
 	constructor() {
 		this.files = [];
-		this.currentFolderPath = '';
+		this.currentR2FolderPath = '';
 		this.bucket = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2Bucket", "string");
 		this.accessKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccessKey", "string");
 		this.secretKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2SecretKey", "string");
@@ -300,7 +300,7 @@ class CloudflareR2FileProvider {
 			try {
 				const fileName = nova.path.basename(file.name);
 	
-				const targetPath = this.currentFolderPath ? `${this.currentFolderPath}${fileName}` : fileName;
+				const targetPath = this.currentR2FolderPath ? `${this.currentR2FolderPath}${fileName}` : fileName;
 				let args = [
 					"AWS_ENDPOINT_URL=https://" + this.accountId + ".r2.cloudflarestorage.com",
 					"AWS_DEFAULT_OUTPUT=json",
@@ -358,7 +358,7 @@ class CloudflareR2FileProvider {
 		
 		if (!element) {
 			return Object.keys(this.fileTree.children).map(key => {
-				const fullPath = this.currentFolderPath ? `${this.currentFolderPath}/${key}` : key;
+				const fullPath = this.currentR2FolderPath ? `${this.currentR2FolderPath}/${key}` : key;
 				return new CloudflareR2File(fullPath, this.fileTree.children[key].children !== undefined);
 			});
 		}
