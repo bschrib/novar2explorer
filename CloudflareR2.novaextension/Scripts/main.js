@@ -7,7 +7,7 @@ class CloudflareR2App {
 		this.cloudflareR2FileProvider = new CloudflareR2FileProvider();
 		this.cloudflareR2FileTreeView = new TreeView("cloudflareR2Files", { dataProvider: this.cloudflareR2FileProvider });
 		this.cloudflareR2FileTreeView.onDidChangeSelection(() => {
-			const selectedItem = this.getCurrentSelection()[0];
+			const selectedItem = this.getCurrentR2Selection()[0];
 			if (selectedItem) {
 				if (selectedItem.isFolder) {
 					this.cloudflareR2FileProvider.currentR2FolderPath = selectedItem.key + '/';
@@ -38,7 +38,7 @@ class CloudflareR2App {
 		});
 		
 		nova.commands.register("cloudflarer2.deleteR2", async () => {
-			const selectedRemoteFiles = this.getCurrentSelection();
+			const selectedRemoteFiles = this.getCurrentR2Selection();
 			for (const file of selectedRemoteFiles) {
 				await this.cloudflareR2FileProvider.deleteFileFromCloudflareR2(file);
 			}
@@ -61,7 +61,7 @@ class CloudflareR2App {
 		this.cloudflareR2FileProvider.currentR2FolderPath = '';
 	}
 	
-	getCurrentSelection() {
+	getCurrentR2Selection() {
 		return this.cloudflareR2FileTreeView.selection;
 	}
 	
@@ -310,7 +310,7 @@ class CloudflareR2FileProvider {
 					"aws", "s3api", "put-object", "--bucket", this.bucket, "--key", targetPath, "--body", file.uri
 				]
 				
-				// console.log('Running upload to R2 with args: ', args)
+				console.log('Running upload to R2 with args: ', args)
 				let process = new Process("/usr/bin/env", {
 					args: args,
 					shell: true
