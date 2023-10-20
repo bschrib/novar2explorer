@@ -61,7 +61,6 @@
                     "tooltip": "Reload Cloudflare R2 Files",
                     "command": "cloudflarer2.refreshR2"
                 }
-
             ],
             "contextCommands": [
               {
