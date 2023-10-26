@@ -301,14 +301,27 @@ class CloudflareR2FileProvider {
 				const fileName = nova.path.basename(file.name);
 	
 				const targetPath = this.currentR2FolderPath ? `${this.currentR2FolderPath}${fileName}` : fileName;
-				let args = [
+				const commonArgs = [
 					"AWS_ENDPOINT_URL=https://" + this.accountId + ".r2.cloudflarestorage.com",
 					"AWS_DEFAULT_OUTPUT=json",
 					"AWS_DEFAULT_REGION=auto",
 					"AWS_ACCESS_KEY_ID=" + this.accessKey,
 					"AWS_SECRET_ACCESS_KEY=" + this.secretKey,
-					"aws", "s3api", "put-object", "--bucket", this.bucket, "--key", targetPath, "--body", file.uri
-				]
+				];
+				
+				let args;
+				if (file.isFolder) {
+					const localFolderPath = file.uri;
+					args = [
+						...commonArgs,
+						"aws", "s3", "sync", localFolderPath, `s3://${this.bucket}/${targetPath}`, "--endpoint-url", `https://${this.accountId}.r2.cloudflarestorage.com`
+					];
+				} else {
+					args = [
+						...commonArgs,
+						"aws", "s3api", "put-object", "--bucket", this.bucket, "--key", targetPath, "--body", file.uri
+					];
+				};
 				
 				console.log('Running upload to R2 with args: ', args)
 				let process = new Process("/usr/bin/env", {
