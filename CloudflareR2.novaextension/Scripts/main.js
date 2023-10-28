@@ -240,26 +240,37 @@ class CloudflareR2FileProvider {
 				process.start();
 			
 			} catch (error) {
-				console.error("Error fetching files from Cloudflare R2:", error);
+				console.error("Error fetching files from Cloudflare R2: ", error);
 				reject(error);
 			}
 		});
 	}
 	
 	async deleteFileFromCloudflareR2(file) {
-		return new Promise((resolve, reject) => {
+		return new Promise(async (resolve, reject) => {
 			try {
-				
-				let args = [
+				const commonArgs = [
 					"AWS_ENDPOINT_URL=https://" + this.accountId + ".r2.cloudflarestorage.com",
 					"AWS_DEFAULT_OUTPUT=json",
 					"AWS_DEFAULT_REGION=auto",
 					"AWS_ACCESS_KEY_ID=" + this.accessKey,
 					"AWS_SECRET_ACCESS_KEY=" + this.secretKey,
-					"aws", "s3api", "delete-object", "--bucket", this.bucket, "--key", file.key
 				];
 				
-				// console.log('Running delete R2 with args: ', args)
+				let args;
+				if (file.isFolder) {
+					args = [
+						...commonArgs,
+						"aws", "s3", "rm", `s3://${this.bucket}/${file.key}`, "--recursive"
+					];
+				} else {
+					args = [
+						...commonArgs,
+						"aws", "s3", "rm", `s3://${this.bucket}/${file.key}`
+					];
+				};
+					
+				console.log('Running delete R2 with args: ', args)
 				let process = new Process("/usr/bin/env", {
 					args: args,
 					shell: true
