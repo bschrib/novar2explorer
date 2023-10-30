@@ -11,13 +11,9 @@ Cloudflare R2 uses awscli (https://aws.amazon.com/cli/) and must be installed fo
 To use Cloudflare R2 Explorer:
 
 - Enable the Cloudflare R2 extension
-- Configure your Cloudflare R2 AWS SDK and account info
+- Configure your Cloudflare R2 AWS SDK and account info in the project settings.
 - Select file(s) in the Local Files section of the R2 Explorer sidebar, then right click and choose to upload to Cloudflare R2; they'll be uploaded to whichever directory you have selected last in the Cloudflare R2 Files section of the sidebar (e.g. clicking a folder, or a file within that folder will cause the upload action to place files into that prefix)
 
 ### Configuration
 
-To configure global Cloudflare R2 Explorer extension, open **Extensions → Extension Library...** then select Cloudflare R2's **Settings** tab.
-
-<!--
-You can also configure preferences on a per-project basis in **Project → Project Settings...**
--->
+To configure project level settings for Cloudflare R2 Explorer extension, open **Project → Projnect Settings...** then select Cloudflare R2 Explorer's **Settings** icon and configure the Cloudflare account ID, S3 access key ID, S3 secret access key, and the name of the R2 bucket.
