@@ -18,6 +18,21 @@ class CloudflareR2App {
 				this.cloudflareR2FileProvider.currentR2FolderPath = '';
 			}
 		});
+		const configKeys = [
+			"cloudflareR2Bucket",
+			"cloudflareR2AccessKey",
+			"cloudflareR2SecretKey",
+			"cloudflareR2AccountId"
+		];
+		
+		configKeys.forEach((key) => {
+			nova.config.onDidChange(`com.trekbikes.cloudflarer2.${key}`, async (newConfig) => {
+				this.cloudflareR2FileProvider.bucket = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2Bucket", "string");
+				this.cloudflareR2FileProvider.accessKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccessKey", "string");
+				this.cloudflareR2FileProvider.secretKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2SecretKey", "string");
+				this.cloudflareR2FileProvider.accountId = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccountId", "string");
+			});
+		});
 		nova.subscriptions.add(this.cloudflareR2FileTreeView);
 
 		this.init();
@@ -270,7 +285,7 @@ class CloudflareR2FileProvider {
 					];
 				};
 					
-				console.log('Running delete R2 with args: ', args)
+				// console.log('Running delete R2 with args: ', args)
 				let process = new Process("/usr/bin/env", {
 					args: args,
 					shell: true
