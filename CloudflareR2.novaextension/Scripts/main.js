@@ -26,11 +26,11 @@ class CloudflareR2App {
 		];
 		
 		configKeys.forEach((key) => {
-			nova.config.onDidChange(`com.trekbikes.cloudflarer2.${key}`, async (newConfig) => {
-				this.cloudflareR2FileProvider.bucket = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2Bucket", "string");
-				this.cloudflareR2FileProvider.accessKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccessKey", "string");
-				this.cloudflareR2FileProvider.secretKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2SecretKey", "string");
-				this.cloudflareR2FileProvider.accountId = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccountId", "string");
+			nova.workspace.config.onDidChange(`com.trekbikes.cloudflarer2.${key}`, async (newConfig) => {
+				this.cloudflareR2FileProvider.bucket = nova.workspace.config.get("com.trekbikes.cloudflarer2.cloudflareR2Bucket", "string");
+				this.cloudflareR2FileProvider.accessKey = nova.workspace.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccessKey", "string");
+				this.cloudflareR2FileProvider.secretKey = nova.workspace.config.get("com.trekbikes.cloudflarer2.cloudflareR2SecretKey", "string");
+				this.cloudflareR2FileProvider.accountId = nova.workspace.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccountId", "string");
 			});
 		});
 		nova.subscriptions.add(this.cloudflareR2FileTreeView);
@@ -47,9 +47,10 @@ class CloudflareR2App {
 	async checkAWSVersion() {
 		const awscliInstalled = await this.checkAWSCLI();
 		if (!awscliInstalled) {
-			nova.workspace.showInformativeMessage("Please install the AWS CLI tools to use the Cloudflare R2 Explorer extension.");
-			return;
+			nova.workspace.showInformativeMessage("Please install the AWS CLI tools to use the Cloudflare R2 Explorer extension, then reload the extension.");
+			return false;
 		}
+		return true;
 	}
 	
 	checkAWSCLI() {
@@ -72,6 +73,7 @@ class CloudflareR2App {
 	}
 
 	registerCommands() {
+		
 		nova.commands.register("cloudflarer2.upload", async () => {
 			const selectedLocalFiles = this.getLocalFileSelection();
 			for (const file of selectedLocalFiles) {
@@ -220,10 +222,10 @@ class CloudflareR2FileProvider {
 	constructor() {
 		this.files = [];
 		this.currentR2FolderPath = '';
-		this.bucket = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2Bucket", "string");
-		this.accessKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccessKey", "string");
-		this.secretKey = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2SecretKey", "string");
-		this.accountId = nova.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccountId", "string");
+		this.bucket = nova.workspace.config.get("com.trekbikes.cloudflarer2.cloudflareR2Bucket", "string");
+		this.accessKey = nova.workspace.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccessKey", "string");
+		this.secretKey = nova.workspace.config.get("com.trekbikes.cloudflarer2.cloudflareR2SecretKey", "string");
+		this.accountId = nova.workspace.config.get("com.trekbikes.cloudflarer2.cloudflareR2AccountId", "string");
 	}
 	
 	async refreshFiles() {
