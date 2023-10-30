@@ -1,7 +1,7 @@
 {
   "identifier": "com.trekbikes.cloudflarer2",
   "name": "Cloudflare R2 Explorer",
-  "organization": "Trek Bicycle",
+  "organization": "Brandon Schreiber",
   "description": "A sidebar extension to manage local files and interact with Cloudflare R2 buckets.",
   "version": "1.0.0",
   "categories": ["sidebars"],
