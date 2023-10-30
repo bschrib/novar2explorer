@@ -41,6 +41,34 @@ class CloudflareR2App {
 
 	init() {
 		this.registerCommands();
+		this.checkAWSVersion();
+	}
+	
+	async checkAWSVersion() {
+		const awscliInstalled = await this.checkAWSCLI();
+		if (!awscliInstalled) {
+			nova.workspace.showInformativeMessage("Please install the AWS CLI tools to use the Cloudflare R2 Explorer extension.");
+			return;
+		}
+	}
+	
+	checkAWSCLI() {
+			return new Promise((resolve, reject) => {
+					let process = new Process("/usr/bin/env", {
+							args: ["aws", "--version"],
+							shell: true
+					});
+	
+					process.onStdout((output) => {
+							resolve(true);
+					});
+	
+					process.onStderr((error) => {
+							resolve(false);
+					});
+	
+					process.start();
+			});
 	}
 
 	registerCommands() {
