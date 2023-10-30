@@ -379,7 +379,7 @@ class CloudflareR2FileProvider {
 					];
 				};
 				
-				console.log('Running upload to R2 with args: ', args)
+				// console.log('Running upload to R2 with args: ', args)
 				let process = new Process("/usr/bin/env", {
 					args: args,
 					shell: true
