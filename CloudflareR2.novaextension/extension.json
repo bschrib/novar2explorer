@@ -1,5 +1,5 @@
 {
-  "identifier": "com.trekbikes.cloudflarer2",
+  "identifier": "com.brandonschreiber.cloudflarer2",
   "name": "Cloudflare R2 Explorer",
   "organization": "Brandon Schreiber",
   "description": "A sidebar extension to manage local files and interact with Cloudflare R2 buckets.",
@@ -8,8 +8,8 @@
   "main": "main.js",
   "min_runtime": "8.0",
   "license": "MIT",
-  "repository": "https://bitbucket.org/trekbikes/nova-cloudflarer2",
-  "bugs": "https://bitbucket.org/trekbikes/nova-cloudflarer2/issues",
+  "repository": "https://github.com/bschrib/novar2explorer",
+  "bugs": "https://github.com/bschrib/novar2explorer/issues",
   "entitlements": {
     "filesystem": "readonly",
     "process": true
@@ -78,28 +78,28 @@
       "type": "section",
       "children": [
         {
-          "key": "com.trekbikes.cloudflarer2.cloudflareR2AccountId",
+          "key": "com.brandonschreiber.cloudflarer2.cloudflareR2AccountId",
           "title": "Cloudflare Account ID",
           "type": "string",
           "default": "default",
           "description": "Enter Your Cloudflare Account ID"
         },
         {
-          "key": "com.trekbikes.cloudflarer2.cloudflareR2AccessKey",
+          "key": "com.brandonschreiber.cloudflarer2.cloudflareR2AccessKey",
           "title": "S3 Access Key ID",
           "type": "string",
           "default": "default",
           "description": "Enter Your Cloudflare R2 S3 Access Key ID"
         },
         {
-          "key": "com.trekbikes.cloudflarer2.cloudflareR2SecretKey",
+          "key": "com.brandonschreiber.cloudflarer2.cloudflareR2SecretKey",
           "title": "S3 Secret Access Key",
           "type": "string",
           "default": "default",
           "description": "Enter Your Cloudflare R2 S3 Secret Access Key"
         },
         {
-          "key": "com.trekbikes.cloudflarer2.cloudflareR2Bucket",
+          "key": "com.brandonschreiber.cloudflarer2.cloudflareR2Bucket",
           "title": "Cloudflare R2 Bucket",
           "type": "string",
           "default": "default",
