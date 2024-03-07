@@ -3,7 +3,7 @@
   "name": "Cloudflare R2 Explorer",
   "organization": "Brandon Schreiber",
   "description": "A sidebar extension to manage local files and interact with Cloudflare R2 buckets.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "categories": ["sidebars"],
   "main": "main.js",
   "min_runtime": "8.0",
