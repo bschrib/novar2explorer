@@ -1,6 +1,6 @@
 **Cloudflare R2** provides integration with Cloudflare's R2 service, allowing you to select files and upload them to any bucket you have configured, as well as delete remote files from R2 storage.
 
-![](https://bitbucket.org/trekbikes/nova-cloudflarer2/raw/dd86258c2edab71b7e6fe7cc3eba7467c761d0a3/CloudflareR2.novaextension/Images/cloudflarer2-screenshots/CloudflareR2-screenshot-01.png)
+![](https://github.com/bschrib/novar2explorer/blob/main/images/CloudflareR2screenshot.png?raw=true)
 
 ## Requirements
 
